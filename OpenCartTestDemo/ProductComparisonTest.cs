@@ -20,12 +20,14 @@ namespace OpenCartTestDemo
         const string PPRODUCT_PC = "iMac";
         const string PRODUCT_FIRST_PHONE = "";
         const string PRODUCT_SECOND_PHONE = "";
+        const string COMPARISON_MESSAGE = "Success: You have added iMac to your product comparison!\r\n×";
+        const string REMOVE_MESSAGE = "You have not chosen any products to compare.";
 
         [OneTimeSetUp]
         public void OneTimeBeforeAllTests()
         {
             driver = new FirefoxDriver();//Launch browser.
-            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);//Implicit Wait 10 sec.
+            driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(4);//Implicit Wait 4 sec.
             driver.Manage().Window.Maximize();//Maximize window size.
 
             #region Other way for chrome
@@ -55,7 +57,7 @@ namespace OpenCartTestDemo
             driver.Manage().Cookies.DeleteAllCookies();//Clear cookies.
         }
 
-        //Jira Test Case: https://ssu-jira.softserveinc.com/browse/CCCXXXVIII-660?filter=-2
+        //Jira Test Case: https://ssu-jira.softserveinc.com/browse/CCCXXXVIII-660
         [Test]
         public void ProductComparison_ClickingTwoTimesCompareButton_OneProductAdded()
         {
@@ -64,27 +66,27 @@ namespace OpenCartTestDemo
             int columnsCount;
 
             //Act
-            //Verify OpenCard home page is opened.
-            driver.FindElement(By.XPath("//h3[text()='Featured']")); //step #1
+            //Step #1 Verify OpenCard home page is opened. 
+            driver.FindElement(By.XPath("//h3[text()='Featured']"));
 
-            //Find all desktops.
-            driver.FindElement(By.LinkText("Desktops")).Click();//step #2
-            driver.FindElement(By.LinkText("Show All Desktops")).Click();//step #3
-            
-            //Open product page.
-            driver.FindElement(By.LinkText("iMac")).Click();//step #4
-            
-            //Add the product for comparison twice.
-            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();//step #5
-            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();//step #5
-            
-            //Open 'product comparison' page.
-            driver.FindElement(By.LinkText("product comparison")).Click();//step #6
-            
+            //Steps #2,#3 Find all desktops.
+            driver.FindElement(By.LinkText("Desktops")).Click();
+            driver.FindElement(By.LinkText("Show All Desktops")).Click();
+
+            //Step #4 Open product page.
+            driver.FindElement(By.LinkText("iMac")).Click();
+
+            //Step #5 Add the product for comparison twice.
+            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();
+            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();
+
+            //Step #6 Open 'product comparison' page.
+            driver.FindElement(By.LinkText("product comparison")).Click();
+
             //Verify Comparative table and its cells are displayed
             driver.FindElement(By.CssSelector(".table.table-bordered"));
             driver.FindElement(By.XPath("//strong[text()='iMac']//ancestor::td"));
-            actual = driver.FindElement(By.LinkText(PPRODUCT_PC)).Text;
+            actual = driver.FindElement(By.LinkText("iMac")).Text;
             columnsCount = driver.FindElements(By.XPath("//a[text()='Remove']")).Count;
 
             //Assert
@@ -92,41 +94,55 @@ namespace OpenCartTestDemo
             Assert.True(columnsCount == 1, "One product is added to the comparison table several times.");
         }
 
-        //Jira Test Case: https://ssu-jira.softserveinc.com/browse/CCCXXXVIII-660?filter=-2
+        //Jira Test Case: https://ssu-jira.softserveinc.com/browse/CCCXXXVIII-673
         [Test]
-        public void ProductComparison_ClickingTwoTimesCompareButton_OneProductAdded()
+        public void ProductComparison_AddedPreviouslyProduct_RemovedFromComparison()
         {
             //Arrange
             string actual;
             int columnsCount;
+            string actualComparisonMessage;
+            string actualRemoveMessage;
+            bool tableDisplayed;
 
             //Act
-            //Verify OpenCard home page is opened.
-            driver.FindElement(By.XPath("//h3[text()='Featured']")); //step #1
+            //Step #1 Verify OpenCard home page is opened. 
+            driver.FindElement(By.XPath("//h3[text()='Featured']"));
 
-            //Find all desktops.
-            driver.FindElement(By.LinkText("Desktops")).Click();//step #2
-            driver.FindElement(By.LinkText("Show All Desktops")).Click();//step #3
+            //Steps #2,#3 Find all desktops.
+            driver.FindElement(By.LinkText("Desktops")).Click();
+            driver.FindElement(By.LinkText("Show All Desktops")).Click();
 
-            //Open product page.
-            driver.FindElement(By.LinkText("iMac")).Click();//step #4
+            //Step #4 Open product page.
+            driver.FindElement(By.LinkText("iMac")).Click();
 
-            //Add the product for comparison twice.
-            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();//step #5
-            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();//step #5
+            //Step #5 Add the product for comparison.
+            driver.FindElement(By.XPath("//div[@class='col-sm-4']//i[@class='fa fa-exchange']")).Click();
+            actualComparisonMessage = driver.FindElement(By.CssSelector(".alert.alert-success")).Text;
+            //Verify comparison message.
+            Assert.AreEqual(actualComparisonMessage, COMPARISON_MESSAGE, "An invalid comparison message is displayed.");
 
-            //Open 'product comparison' page.
-            driver.FindElement(By.LinkText("product comparison")).Click();//step #6
+            //Step #6 Open 'product comparison' page.
+            driver.FindElement(By.LinkText("product comparison")).Click();
 
-            //Verify Comparative table and its cells are displayed
+            //Verify Comparative table and its cells are displayed.
             driver.FindElement(By.CssSelector(".table.table-bordered"));
             driver.FindElement(By.XPath("//strong[text()='iMac']//ancestor::td"));
-            actual = driver.FindElement(By.LinkText(PPRODUCT_PC)).Text;
+            actual = driver.FindElement(By.LinkText("iMac")).Text;
+            Assert.AreEqual(PPRODUCT_PC, actual, "The selected product was not added to the comparison table.");
+
+            //Step #7 Remove product from the comparison list.
+            driver.FindElement(By.LinkText("Remove")).Click();
             columnsCount = driver.FindElements(By.XPath("//a[text()='Remove']")).Count;
+            tableDisplayed = Methods.IsElementPresent(driver, By.CssSelector(".table.table-bordered"));
+            actualRemoveMessage = driver.FindElement(By.CssSelector("#content p")).Text;
+            Console.WriteLine(actualRemoveMessage);
 
             //Assert
-            Assert.AreEqual(PPRODUCT_PC, actual, "The selected product was not added to the comparison table.");
-            Assert.True(columnsCount == 1, "One product is added to the comparison table several times.");
+            Assert.True(columnsCount == 0, "A comparison table with at least one column " +
+                "is present on the page after the product is removed.");
+            Assert.False(tableDisplayed, "The comparison table is present on the page after the product is removed.");
+            Assert.AreEqual(actualRemoveMessage, REMOVE_MESSAGE, "An invalid comparison message is displayed.");
         }
     }
 }
